@@ -15,7 +15,7 @@ class ProductsRepository {
     }
 
     static async findByIdAndUpdate(id, productData) {
-        return await ProductModel.findByIdAndUpdate(id, productData, { new: true });
+        return await ProductModel.findByIdAndUpdate(id, productData, { returnDocument: 'after', runValidators: true });
     }
 
     static async findByIdAndDelete(id) {
