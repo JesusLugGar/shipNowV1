@@ -96,15 +96,34 @@ src/
     product.controller.js
     user.controller.js
   models/
+    courier.model.js
+    delivery.model.js
+    order.model.js
     product.model.js
     user.model.js
+  mocks/
+    controllers/
+      mocks.controllers.js
+    routes/
+      mocks.routes.js
+    services/
+      mocks.services.js
   repositories/
+    courier.repository.js
+    delivery.repository.js
+    order.repository.js
     product.repository.js
     user.repository.js
   routes/
+    courier.routes.js
+    delivery.routes.js
+    order.routes.js
     product.routes.js
     users.routes.js
   services/
+    courier.service.js
+    delivery.service.js
+    order.service.js
     product.service.js
     user.service.js
   utils/
@@ -161,34 +180,92 @@ Esto evita usar strings sueltos en distintas partes del proyecto y reduce errore
 
 ## Endpoints Principales
 
-Usuarios:
-
-```txt
-GET    /api/users
-GET    /api/users/:id
-POST   /api/users
-PUT    /api/users/:id
-PATCH  /api/users/:id
-DELETE /api/users/:id
-```
-
-Productos:
-
-```txt
-GET    /api/products
-GET    /api/products/:id
-POST   /api/products
-PUT    /api/products/:id
-PATCH  /api/products/:id
-DELETE /api/products/:id
-```
-
 Health check:
 
 ```txt
 GET /health
 ```
 
+Lectura de recursos:
+
+```txt
+GET /api/users
+GET /api/users/:id
+GET /api/products
+GET /api/products/:id
+GET /api/orders
+GET /api/orders/:id
+GET /api/couriers
+GET /api/couriers/available
+GET /api/couriers/available/:zone
+GET /api/couriers/:id
+GET /api/deliveries
+GET /api/deliveries/:id
+```
+
+## Endpoints De Escritura
+
+| Metodo | Ruta | Descripcion |
+| --- | --- | --- |
+| POST | `/api/users` | Crear usuario |
+| POST | `/api/products` | Crear producto |
+| POST | `/api/orders` | Crear orden |
+| POST | `/api/couriers` | Crear repartidor |
+| POST | `/api/deliveries/assign` | Asignar una orden a un repartidor |
+| POST | `/api/mocks/mock-users` | Generar mocks de usuarios |
+| POST | `/api/mocks/mock-products` | Generar mocks de productos |
+| POST | `/api/mocks/mock-orders` | Generar mocks de ordenes |
+| PATCH | `/api/users/:id` | Actualizar parcialmente un usuario |
+| PATCH | `/api/products/:id` | Actualizar parcialmente un producto |
+| PATCH | `/api/orders/:id` | Actualizar parcialmente una orden |
+| PATCH | `/api/couriers/:id/availability` | Marcar repartidor como disponible |
+| PATCH | `/api/couriers/:id/unavailability` | Marcar repartidor como no disponible |
+| PUT | `/api/users/:id` | Actualizar usuario |
+| PUT | `/api/products/:id` | Actualizar producto |
+| PUT | `/api/orders/:id` | Actualizar orden |
+| PUT | `/api/couriers/:id` | Actualizar repartidor |
+| PUT | `/api/deliveries/:id/status` | Actualizar estado de una entrega |
+| DELETE | `/api/users/:id` | Eliminar usuario |
+| DELETE | `/api/products/:id` | Eliminar producto |
+| DELETE | `/api/orders/:id` | Eliminar orden |
+| DELETE | `/api/couriers/:id` | Eliminar repartidor |
+
+## Mocks
+
+Los endpoints de mocks permiten generar datos falsos para usuarios, productos y ordenes. Todos reciben un body con `count` y `saveToDatabase`.
+
+- `count`: cantidad de registros a generar. Debe ser un numero entero entre `1` y `20`.
+- `saveToDatabase`: si es `true`, guarda los mocks en MongoDB. Si es `false` o no se envia, solo los devuelve en la respuesta.
+
+Ejemplo:
+
+```json
+{
+  "count": 10,
+  "saveToDatabase": true
+}
+```
+
+Usuarios mock:
+
+```txt
+POST /api/mocks/mock-users
+```
+
+Productos mock:
+
+```txt
+POST /api/mocks/mock-products
+```
+
+Ordenes mock:
+
+```txt
+POST /api/mocks/mock-orders
+```
+
+Nota: las ordenes mock pueden usar IDs generados para simular referencias. Para probar el flujo real de una orden, se recomienda crear usuarios y productos reales, luego crear una orden con esos IDs.
+
 ## Estado Actual
 
-El proyecto se encuentra en etapa inicial de refactorizacion para la pre-entrega. La entidad Products ya tiene su estructura base separada en routes, controller, service, repository y model.
+El proyecto se encuentra en la segunda Etapa de refactorizacion para la Segunda pre-entrega.

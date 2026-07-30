@@ -10,7 +10,6 @@ class MockController {
 
         if (!Number.isInteger(count) || count <= 0 || count > 20) {
             throw new Error('El campo count debe ser un número entre 1 y 20');
-            console.log(error);
         }
 
         return { count, saveToDatabase };
