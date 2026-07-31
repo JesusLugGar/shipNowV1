@@ -104,6 +104,8 @@ src/
   mocks/
     controllers/
       mocks.controllers.js
+    repositories/
+      mocks.repository.js
     routes/
       mocks.routes.js
     services/
@@ -173,7 +175,7 @@ Los valores fijos del dominio se centralizan en `src/utils/constants.js`.
 
 Ejemplos:
 
-- Roles de usuario: `ADMIN`, `USER`, `COURIER`.
+- Roles de usuario: `ADMIN`, `USER`, `DRIVER`, `CUSTOMER`, `STORE`.
 - Estados de producto: `AVAILABLE`, `OUT_OF_STOCK`.
 
 Esto evita usar strings sueltos en distintas partes del proyecto y reduce errores por valores mal escritos.
@@ -212,9 +214,12 @@ GET /api/deliveries/:id
 | POST | `/api/orders` | Crear orden |
 | POST | `/api/couriers` | Crear repartidor |
 | POST | `/api/deliveries/assign` | Asignar una orden a un repartidor |
+| POST | `/api/mocks/seed` | Insertar datos mock relacionados en MongoDB |
 | POST | `/api/mocks/mock-users` | Generar mocks de usuarios |
 | POST | `/api/mocks/mock-products` | Generar mocks de productos |
 | POST | `/api/mocks/mock-orders` | Generar mocks de ordenes |
+| POST | `/api/mocks/mock-couriers` | Generar mocks de repartidores |
+| POST | `/api/mocks/mock-deliveries` | Generar mocks de entregas |
 | PATCH | `/api/users/:id` | Actualizar parcialmente un usuario |
 | PATCH | `/api/products/:id` | Actualizar parcialmente un producto |
 | PATCH | `/api/orders/:id` | Actualizar parcialmente una orden |
@@ -232,39 +237,137 @@ GET /api/deliveries/:id
 
 ## Mocks
 
-Los endpoints de mocks permiten generar datos falsos para usuarios, productos y ordenes. Todos reciben un body con `count` y `saveToDatabase`.
+El modulo de mocks permite generar datos falsos para usuarios, productos, repartidores, ordenes y entregas. La logica respeta el flujo por capas:
 
-- `count`: cantidad de registros a generar. Debe ser un numero entero entre `1` y `20`.
-- `saveToDatabase`: si es `true`, guarda los mocks en MongoDB. Si es `false` o no se envia, solo los devuelve en la respuesta.
-
-Ejemplo:
-
-```json
-{
-  "count": 10,
-  "saveToDatabase": true
-}
+```txt
+Route -> Controller -> Service -> Repository -> Model
 ```
+
+Los endpoints `GET` solo devuelven datos simulados y no guardan nada en MongoDB. Reciben `qty` por query params.
+
+- `qty`: cantidad de registros a generar. Debe ser un numero entero entre `1` y `50`.
 
 Usuarios mock:
 
 ```txt
-POST /api/mocks/mock-users
+GET /api/mocks/users?qty=2
 ```
 
 Productos mock:
 
 ```txt
-POST /api/mocks/mock-products
+GET /api/mocks/products?qty=2
+```
+
+Repartidores mock:
+
+```txt
+GET /api/mocks/couriers?qty=2
 ```
 
 Ordenes mock:
 
 ```txt
-POST /api/mocks/mock-orders
+GET /api/mocks/orders?qty=2
 ```
 
-Nota: las ordenes mock pueden usar IDs generados para simular referencias. Para probar el flujo real de una orden, se recomienda crear usuarios y productos reales, luego crear una orden con esos IDs.
+Entregas mock:
+
+```txt
+GET /api/mocks/deliveries?qty=2
+```
+
+Escenario completo en memoria:
+
+```txt
+GET /api/mocks/scenario?qty=2
+```
+
+Ejemplo de usuarios mock:
+
+```json
+[
+  {
+    "first_name": "Ana",
+    "last_name": "Perez",
+    "email": "ana.perez@mock.shipnow.test",
+    "password": "123456",
+    "role": "customer"
+  },
+  {
+    "first_name": "Luis",
+    "last_name": "Gomez",
+    "email": "luis.gomez@mock.shipnow.test",
+    "password": "123456",
+    "role": "driver"
+  }
+]
+```
+
+### Carga De Datos De Prueba
+
+El endpoint de seed inserta registros en MongoDB de forma controlada:
+
+```txt
+POST /api/mocks/seed?qty=10
+```
+
+Respuesta esperada:
+
+```json
+{
+  "insertados": 60,
+  "coleccion": "escenario_completo",
+  "detalle": {
+    "usuarios": 20,
+    "productos": 10,
+    "repartidores": 10,
+    "ordenes": 10,
+    "entregas": 10
+  }
+}
+```
+
+Por defecto crea un escenario completo con:
+
+- Usuarios con roles validos usando `USER_ROLES`.
+- Productos disponibles para poder armar pedidos.
+- Repartidores con estados validos usando `COURIER_STATUS`.
+- Ordenes con `customerId` real, productos reales, prioridad desde `DELIVERY_PRIORITY` y estado desde `ORDER_STATUS`.
+- Entregas asociadas a ordenes y repartidores reales.
+
+Tambien se puede cargar una coleccion especifica:
+
+```txt
+POST /api/mocks/seed?qty=10&collection=users
+POST /api/mocks/seed?qty=10&collection=products
+POST /api/mocks/seed?qty=10&collection=couriers
+POST /api/mocks/seed?qty=10&collection=orders
+POST /api/mocks/seed?qty=10&collection=deliveries
+```
+
+Valores permitidos para `collection`: `all`, `users`, `products`, `couriers`, `orders`, `deliveries`.
+
+Para mantener compatibilidad con la version anterior, tambien existen estos endpoints `POST`:
+
+```txt
+POST /api/mocks/mock-users
+POST /api/mocks/mock-products
+POST /api/mocks/mock-orders
+POST /api/mocks/mock-couriers
+POST /api/mocks/mock-deliveries
+```
+
+Estos endpoints reciben body:
+
+```json
+{
+  "count": 10,
+  "saveToDatabase": false
+}
+```
+
+Si `saveToDatabase` es `true`, guardan los datos en MongoDB usando la misma logica controlada del seed.
 
 ## Estado Actual
 
