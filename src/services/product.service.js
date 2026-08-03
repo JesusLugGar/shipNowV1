@@ -1,5 +1,7 @@
 import ProductRepository from '../repositories/product.repository.js';
 
+import { ERROR_CODES } from '../error/error-codes.js';
+import CustomError from '../error/custom.error.js';
 import { STATUS_PRODUCTS } from '../utils/constants.js';
 
 class ProductsService {
@@ -8,26 +10,35 @@ class ProductsService {
   }
 
   static async getProductById(id) {
-    return await ProductRepository.findById(id);
+    const product = await ProductRepository.findById(id);
+
+    if (!product) {
+      throw new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND);
+    }
+
+    return product;
   }
 
   static async createProduct(productData) {
     const { name, description, price, stock } = productData;
 
     if (!name || !description || price === undefined || stock === undefined) {
-      throw new Error('Faltan campos obligatorios: name, description, price y stock son requeridos.');
+      throw new CustomError(
+        ERROR_CODES.VALIDATION_ERROR,
+        'Faltan campos obligatorios: name, description, price y stock son requeridos.',
+      );
     }
 
     if (typeof price !== 'number' || price <= 0) {
-      throw new Error('El campo price debe ser un número mayor a 0.');
+      throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'El campo price debe ser un número mayor a 0.');
     }
 
     if (!Number.isInteger(price)) {
-      throw new Error('El precio debe ser expresado en pesos chilenos.');
+      throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'El precio debe ser expresado en pesos chilenos.');
     }
 
     if (typeof stock !== 'number' || stock <= 0) {
-      throw new Error('El campo stock debe ser un número mayor a 0.');
+      throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'El campo stock debe ser un número mayor a 0.');
     }
 
     return await ProductRepository.create(productData);
@@ -35,7 +46,7 @@ class ProductsService {
 
   static async prepareProductsForOrder(products) {
     if (!Array.isArray(products) || products.length === 0) {
-      throw new Error('La orden debe incluir al menos un producto.');
+      throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'La orden debe incluir al menos un producto.');
     }
 
     const requestedProducts = new Map();
@@ -44,7 +55,7 @@ class ProductsService {
       const { productId, quantity } = item;
 
       if (!productId || !Number.isInteger(quantity) || quantity <= 0) {
-        throw new Error('Cada producto debe tener productId y quantity mayor a 0.');
+        throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'Cada producto debe tener productId y quantity mayor a 0.');
       }
 
       const productKey = productId.toString();
@@ -59,11 +70,11 @@ class ProductsService {
       const product = await ProductRepository.findById(productId);
 
       if (!product) {
-        throw new Error(`El producto con ID ${productId} no existe.`);
+        throw new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND, `El producto con ID ${productId} no existe.`);
       }
 
       if (product.stock < quantity) {
-        throw new Error(`No hay suficiente stock para el producto ${product.name}.`);
+        throw new CustomError(ERROR_CODES.INSUFFICIENT_STOCK, `No hay suficiente stock para el producto ${product.name}.`);
       }
 
       productsCost += product.price * quantity;
@@ -91,15 +102,33 @@ class ProductsService {
   }
 
   static async partiallyUpdateProduct(id, productData) {
-    return await ProductRepository.findByIdAndUpdate(id, productData);
+    const product = await ProductRepository.findByIdAndUpdate(id, productData);
+
+    if (!product) {
+      throw new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND);
+    }
+
+    return product;
   }
 
   static async updateProduct(id, productData) {
-    return await ProductRepository.findByIdAndUpdate(id, productData);
+    const product = await ProductRepository.findByIdAndUpdate(id, productData);
+
+    if (!product) {
+      throw new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND);
+    }
+
+    return product;
   }
 
   static async deleteProduct(id) {
-    return await ProductRepository.findByIdAndDelete(id);
+    const product = await ProductRepository.findByIdAndDelete(id);
+
+    if (!product) {
+      throw new CustomError(ERROR_CODES.PRODUCT_NOT_FOUND);
+    }
+
+    return product;
   }
 }
 

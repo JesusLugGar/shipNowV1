@@ -9,6 +9,8 @@ import {
     ORDER_STATUS,
     DELIVERY_PRIORITY,
 } from '../../utils/constants.js';
+import { ERROR_CODES } from '../../error/error-codes.js';
+import CustomError from '../../error/custom.error.js';
 
 import MockRepository from '../repositories/mocks.repository.js';
 
@@ -170,7 +172,10 @@ class MockService {
         const validCollections = ['all', 'users', 'products', 'couriers', 'orders', 'deliveries'];
 
         if (!validCollections.includes(collection)) {
-            throw new Error(`Colección inválida. Valores permitidos: ${validCollections.join(', ')}`);
+            throw new CustomError(
+                ERROR_CODES.INVALID_MOCK_TYPE,
+                `Colección inválida. Valores permitidos: ${validCollections.join(', ')}`,
+            );
         }
 
         if (collection === 'users') {

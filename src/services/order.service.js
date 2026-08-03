@@ -1,5 +1,7 @@
 import OrderRepository from '../repositories/order.repository.js';
 
+import { ERROR_CODES } from '../error/error-codes.js';
+import CustomError from '../error/custom.error.js';
 import UserRepository from '../repositories/user.repository.js';
 import ProductsService from './product.service.js';
 
@@ -9,7 +11,13 @@ class OrderService {
   }
 
   static async getOrderById(id) {
-    return await OrderRepository.findById(id);
+    const order = await OrderRepository.findById(id);
+
+    if (!order) {
+      throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
+    }
+
+    return order;
   }
 
   static async createOrder(orderData) {
@@ -22,7 +30,8 @@ class OrderService {
       !Array.isArray(products) ||
       products.length === 0
     ) {
-      throw new Error(
+      throw new CustomError(
+        ERROR_CODES.VALIDATION_ERROR,
         'Faltan campos obligatorios: customerId, address, priority y products son requeridos.',
       );
     }
@@ -30,7 +39,7 @@ class OrderService {
     const customer = await UserRepository.findById(customerId);
 
     if (!customer) {
-      throw new Error('El cliente no existe.');
+      throw new CustomError(ERROR_CODES.USER_NOT_FOUND, 'El cliente no existe.');
     }
 
     const { orderProducts, productsCost } = await ProductsService.prepareProductsForOrder(products);
@@ -53,21 +62,39 @@ class OrderService {
   }
 
   static async partiallyUpdateOrder(id, orderData) {
-    return await OrderRepository.findByIdAndUpdate(id, orderData, {
+    const order = await OrderRepository.findByIdAndUpdate(id, orderData, {
       returnDocument: 'after',
       runValidators: true,
     });
+
+    if (!order) {
+      throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
+    }
+
+    return order;
   }
 
   static async updateOrder(id, orderData) {
-    return await OrderRepository.findByIdAndUpdate(id, orderData, {
+    const order = await OrderRepository.findByIdAndUpdate(id, orderData, {
       returnDocument: 'after',
       runValidators: true,
     });
+
+    if (!order) {
+      throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
+    }
+
+    return order;
   }
 
   static async deleteOrder(id) {
-    return await OrderRepository.findByIdAndDelete(id);
+    const order = await OrderRepository.findByIdAndDelete(id);
+
+    if (!order) {
+      throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
+    }
+
+    return order;
   }
 
   static calculateDeliveryCost(priority) {

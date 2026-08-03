@@ -1,6 +1,8 @@
 import DeliveryRepository from '../repositories/delivery.repository.js';
 import OrderRepository from '../repositories/order.repository.js';
 
+import { ERROR_CODES } from '../error/error-codes.js';
+import CustomError from '../error/custom.error.js';
 import courierService from './courier.service.js';
 
 import { ORDER_STATUS, COURIER_STATUS } from '../utils/constants.js';
@@ -10,37 +12,46 @@ class DeliveryService {
         return await DeliveryRepository.find();
     }
     static async getDeliveryById(id) {
-        return await DeliveryRepository.findById(id);
+        const delivery = await DeliveryRepository.findById(id);
+
+        if (!delivery) {
+            throw new CustomError(ERROR_CODES.DELIVERY_NOT_FOUND);
+        }
+
+        return delivery;
     }
 
     static async assignDelivery(deliveryData) {
         const { orderId, courierId } = deliveryData;
 
         if (!orderId || !courierId) {
-            throw new Error('Faltan campos obligatorios: orderId y courierId son requeridos.');
+            throw new CustomError(
+                ERROR_CODES.VALIDATION_ERROR,
+                'Faltan campos obligatorios: orderId y courierId son requeridos.',
+            );
         }
 
         const order = await OrderRepository.findById(orderId);
         if (!order) {
-            throw new Error('Orden no encontrada');
+            throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
         }
         
         if (order.status !== ORDER_STATUS.CREATED) {
-            throw new Error('La orden no está en estado creado y no puede ser asignada a un repartidor.');
+            throw new CustomError(
+                ERROR_CODES.INVALID_ORDER_STATUS,
+                'La orden no está en estado creado y no puede ser asignada a un repartidor.',
+            );
         }
 
         const existingDelivery = await DeliveryRepository.findByOrderId(orderId);
         if (existingDelivery) {
-            throw new Error('Ya existe una entrega asignada a esta orden.');
+            throw new CustomError(ERROR_CODES.DELIVERY_ALREADY_ASSIGNED);
         }
         
         const courier = await courierService.getCourierById(courierId);
-        if (!courier) {
-            throw new Error('Repartidor no encontrado');
-        }
-        
+
         if (courier.availableStatus !== COURIER_STATUS.AVAILABLE) {
-            throw new Error('El repartidor no está disponible para asignar la entrega.');
+            throw new CustomError(ERROR_CODES.COURIER_NOT_AVAILABLE, 'El repartidor no está disponible para asignar la entrega.');
         }
 
         const delivery = await DeliveryRepository.create({
@@ -62,7 +73,7 @@ class DeliveryService {
     static async updateDeliveryStatus(id, status) {
         const delivery = await DeliveryRepository.findById(id);
         if (!delivery) {
-            throw new Error('Entrega no encontrada');
+            throw new CustomError(ERROR_CODES.DELIVERY_NOT_FOUND);
         }
 
         const allowedTransitions = {
@@ -72,7 +83,10 @@ class DeliveryService {
 
         const allowedNextStatuses = allowedTransitions[delivery.status] || [];
         if (!allowedNextStatuses.includes(status)) {
-            throw new Error(`Transición de estado no permitida: ${delivery.status} a ${status}`);
+            throw new CustomError(
+                ERROR_CODES.INVALID_DELIVERY_STATUS,
+                `Transición de estado no permitida: ${delivery.status} a ${status}`,
+            );
         }
 
         const updateData = { status };

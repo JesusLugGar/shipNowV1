@@ -1,5 +1,7 @@
 import CourierModel from '../models/courier.model.js';
 
+import { ERROR_CODES } from '../error/error-codes.js';
+import CustomError from '../error/custom.error.js';
 import { COURIER_STATUS } from '../utils/constants.js';
 
 class CourierRepository {
@@ -30,7 +32,7 @@ class CourierRepository {
 
     static async findAvailableByZone(zone) {
         if (!zone) {
-            throw new Error('Zone parameter is required');
+            throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'Zone parameter is required');
         }
         return await CourierModel.find({ zone: zone, availableStatus: COURIER_STATUS.AVAILABLE });
     } 

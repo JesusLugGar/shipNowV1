@@ -1,4 +1,6 @@
 import MockService from '../services/mocks.services.js';
+import { ERROR_CODES } from '../../error/error-codes.js';
+import CustomError from '../../error/custom.error.js';
 
 class MockController {
     static getMockOptions(req) {
@@ -8,7 +10,7 @@ class MockController {
         const saveToDatabase = body.saveToDatabase === true || req.query.saveToDatabase === 'true';
 
         if (!Number.isInteger(count) || count <= 0 || count > 50) {
-            throw new Error('El campo qty/count debe ser un número entero entre 1 y 50');
+            throw new CustomError(ERROR_CODES.INVALID_MOCK_AMOUNT, 'El campo qty/count debe ser un número entero entre 1 y 50');
         }
 
         return { count, saveToDatabase };
@@ -19,34 +21,34 @@ class MockController {
         return req.query.collection || body.collection || 'all';
     }
 
-    static getMockUsers(req, res) {
+    static getMockUsers(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             res.status(200).json(MockService.generateMockUsers(count));
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static getMockProducts(req, res) {
+    static getMockProducts(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             res.status(200).json(MockService.generateMockProducts(count));
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static getMockCouriers(req, res) {
+    static getMockCouriers(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             res.status(200).json(MockService.generateMockCouriers(count));
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static getMockOrders(req, res) {
+    static getMockOrders(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             const scenario = MockService.generateMockScenario(count);
@@ -59,11 +61,11 @@ class MockController {
                 },
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static getMockDeliveries(req, res) {
+    static getMockDeliveries(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             const scenario = MockService.generateMockScenario(count);
@@ -76,20 +78,20 @@ class MockController {
                 },
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static getMockScenario(req, res) {
+    static getMockScenario(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             res.status(200).json(MockService.generateMockScenario(count));
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static async seed(req, res) {
+    static async seed(req, res, next) {
         try {
             const { count } = MockController.getMockOptions(req);
             const collection = MockController.getSeedCollection(req);
@@ -97,11 +99,11 @@ class MockController {
 
             res.status(201).json(result);
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static async generateUsers(req, res) {
+    static async generateUsers(req, res, next) {
         try {
             const { count, saveToDatabase } = MockController.getMockOptions(req);
 
@@ -117,11 +119,11 @@ class MockController {
                 message: 'Users generated successfully',
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static async generateProducts(req, res) {
+    static async generateProducts(req, res, next) {
         try {
             const { count, saveToDatabase } = MockController.getMockOptions(req);
 
@@ -137,11 +139,11 @@ class MockController {
                 message: 'Products generated successfully',
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static async generateOrders(req, res) {
+    static async generateOrders(req, res, next) {
         try {
             const { count, saveToDatabase } = MockController.getMockOptions(req);
 
@@ -161,11 +163,11 @@ class MockController {
                 message: 'Orders generated successfully',
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static async generateCouriers(req, res) {
+    static async generateCouriers(req, res, next) {
         try {
             const { count, saveToDatabase } = MockController.getMockOptions(req);
             const couriers = MockService.generateMockCouriers(count);
@@ -180,11 +182,11 @@ class MockController {
                 message: 'Couriers generated successfully',
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 
-    static async generateDeliveries(req, res) {
+    static async generateDeliveries(req, res, next) {
         try {
             const { count, saveToDatabase } = MockController.getMockOptions(req);
             const scenario = MockService.generateMockScenario(count);
@@ -203,7 +205,7 @@ class MockController {
                 message: 'Deliveries generated successfully',
             });
         } catch (error) {
-            res.status(400).json({ message: error.message });
+            next(error);
         }
     }
 }

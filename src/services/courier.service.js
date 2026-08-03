@@ -1,5 +1,7 @@
 import CourierRepository from '../repositories/courier.repository.js';
 
+import { ERROR_CODES } from '../error/error-codes.js';
+import CustomError from '../error/custom.error.js';
 import { COURIER_STATUS } from '../utils/constants.js';
 
 class CourierService {
@@ -8,7 +10,13 @@ class CourierService {
     }
 
     static async getCourierById(id) {
-        return await CourierRepository.findById(id);
+        const courier = await CourierRepository.findById(id);
+
+        if (!courier) {
+            throw new CustomError(ERROR_CODES.COURIER_NOT_FOUND);
+        }
+
+        return courier;
     }
 
     static async getAvailableCouriers() { 
@@ -17,7 +25,7 @@ class CourierService {
     
     static async getAvailableCourierByZone(zone) {
         if (!zone) {
-            throw new Error('Zone parameter is required');
+            throw new CustomError(ERROR_CODES.VALIDATION_ERROR, 'Zone parameter is required');
         }
         return await CourierRepository.findAvailableByZone(zone);
     }
@@ -26,29 +34,44 @@ class CourierService {
         const { nameCourier, zone } = courierData;
 
         if(!nameCourier || !zone) {
-            throw new Error('Missing required fields: nameCourier and zone are required');
+            throw new CustomError(
+                ERROR_CODES.VALIDATION_ERROR,
+                'Missing required fields: nameCourier and zone are required',
+            );
         }
         return await CourierRepository.create(courierData);
 
     }
 
     static async updateCourier(id, courierData) {
-        return await CourierRepository.findByIdAndUpdate(id, courierData, { new: true, runValidators: true });
+        const courier = await CourierRepository.findByIdAndUpdate(id, courierData, { new: true, runValidators: true });
+
+        if (!courier) {
+            throw new CustomError(ERROR_CODES.COURIER_NOT_FOUND);
+        }
+
+        return courier;
     }
 
     static async deleteCourier(id) {
-        return await CourierRepository.findByIdAndDelete(id);
+        const courier = await CourierRepository.findByIdAndDelete(id);
+
+        if (!courier) {
+            throw new CustomError(ERROR_CODES.COURIER_NOT_FOUND);
+        }
+
+        return courier;
     }
 
     static async markCourierAsUnavailable(id) {
 
         const courier = await CourierRepository.findById(id);
         if (!courier) {
-            throw new Error('Courier no encontrado');
+            throw new CustomError(ERROR_CODES.COURIER_NOT_FOUND);
         }
 
         if (courier.availableStatus === COURIER_STATUS.UNAVAILABLE) {
-            throw new Error('Courier esta ya marcado como UnAvailable');
+            throw new CustomError(ERROR_CODES.COURIER_ALREADY_UNAVAILABLE);
         }
         return await CourierRepository.findByIdAndUpdate(id, { availableStatus: COURIER_STATUS.UNAVAILABLE });
     }
@@ -56,11 +79,11 @@ class CourierService {
     static async markCourierAsAvailable(id) {
         const courier = await CourierRepository.findById(id);
         if (!courier) {
-            throw new Error('Courier no encontrado');
+            throw new CustomError(ERROR_CODES.COURIER_NOT_FOUND);
         }
 
         if (courier.availableStatus === COURIER_STATUS.AVAILABLE) {
-            throw new Error('Courier esta ya marcado como Available');
+            throw new CustomError(ERROR_CODES.COURIER_ALREADY_AVAILABLE);
         }
         return await CourierRepository.findByIdAndUpdate(id, { availableStatus: COURIER_STATUS.AVAILABLE });
     }
