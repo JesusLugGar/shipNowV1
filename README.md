@@ -1,6 +1,6 @@
 # ShipNow API V1
 
-API base para el proyecto ShipNow del curso Backend III. El objetivo de esta pre-entrega es refactorizar la aplicación a una arquitectura profesional por capas y centralizar la configuración de entorno.
+API base para el proyecto ShipNow del curso Backend III. El objetivo de esta pre-entrega es centralizar el manejo profesional de errores con errores personalizados, diccionario de errores y middleware global.
 
 ## Tecnologias
 
@@ -95,6 +95,12 @@ src/
   controllers/
     product.controller.js
     user.controller.js
+  error/
+    custom.error.js
+    error-codes.js
+    errors.dictionary.js
+  middlewares/
+    error-handler.middleware.js
   models/
     courier.model.js
     delivery.model.js
@@ -139,9 +145,9 @@ El proyecto se organiza usando una arquitectura de tres capas principales:
 
 ### Controller
 
-Es la unica puerta de entrada HTTP. Recibe `req` y `res`, obtiene parametros o datos del body, llama al service correspondiente y devuelve una respuesta con el status code adecuado.
+Es la unica puerta de entrada HTTP. Recibe `req` y `res`, obtiene parametros o datos del body, llama al service correspondiente y devuelve una respuesta exitosa con el status code adecuado.
 
-Los controllers no deben importar Mongoose ni conocer detalles de MongoDB.
+Los controllers no deben importar Mongoose ni conocer detalles de MongoDB. Tampoco deben responder errores de forma aislada; cualquier error se envia al middleware global con `next(error)`.
 
 ### Service
 
@@ -152,6 +158,7 @@ Ejemplos de logica que pertenece al service:
 - Validar datos antes de crear o actualizar un producto.
 - Decidir si se devuelven solo productos disponibles.
 - Aplicar reglas relacionadas con roles de usuario.
+- Lanzar errores personalizados del dominio, por ejemplo usuario inexistente, pedido no encontrado o estado invalido.
 
 ### Repository
 
@@ -168,6 +175,132 @@ Route -> Controller -> Service -> Repository -> Model
 ```
 
 Las rutas solo conectan un path con el metodo del controller correspondiente.
+
+## Manejo Profesional De Errores
+
+El proyecto centraliza los errores HTTP en una capa comun compuesta por:
+
+- `src/error/error-codes.js`: constantes con los codigos de error del dominio.
+- `src/error/errors.dictionary.js`: diccionario que relaciona cada codigo con su status HTTP y mensaje base.
+- `src/error/custom.error.js`: clase `CustomError` usada por services y otras capas para representar errores esperados.
+- `src/middlewares/error-handler.middleware.js`: middleware global que transforma errores en respuestas HTTP uniformes.
+
+El flujo esperado ante un error es:
+
+```txt
+Service o capa correspondiente -> CustomError -> Controller next(error) -> errorHandler -> respuesta HTTP
+```
+
+Los errores esperados se detectan principalmente en los services. Los controllers no deciden la respuesta final de error; solo delegan el error al middleware global.
+
+### Estructura De Respuesta De Error
+
+Todos los errores controlados responden con la misma estructura:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "ERROR_CODE",
+    "message": "Mensaje descriptivo del error"
+  }
+}
+```
+
+Ejemplo para un usuario inexistente:
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "USER_NOT_FOUND",
+    "message": "Usuario no encontrado."
+  }
+}
+```
+
+### Errores Del Dominio
+
+Algunos codigos de error incluidos:
+
+- `VALIDATION_ERROR`: datos obligatorios faltantes o formato invalido.
+- `INVALID_ID`: identificador de MongoDB invalido.
+- `USER_NOT_FOUND`: usuario inexistente.
+- `PRODUCT_NOT_FOUND`: producto inexistente.
+- `INSUFFICIENT_STOCK`: stock insuficiente para crear una orden.
+- `ORDER_NOT_FOUND`: pedido inexistente.
+- `DELIVERY_NOT_FOUND`: entrega inexistente.
+- `DELIVERY_ALREADY_ASSIGNED`: orden ya asignada a una entrega.
+- `COURIER_NOT_FOUND`: repartidor inexistente.
+- `COURIER_NOT_AVAILABLE`: repartidor no disponible.
+- `INVALID_ORDER_STATUS`: estado de pedido invalido.
+- `INVALID_DELIVERY_STATUS`: transicion de entrega invalida.
+- `INVALID_MOCK_AMOUNT`: cantidad invalida para generar mocks.
+- `INVALID_MOCK_TYPE`: tipo o coleccion de mocks invalida.
+- `MOCKS_NOT_ALLOWED`: modulo de mocks deshabilitado en produccion.
+- `ROUTE_NOT_FOUND`: ruta inexistente.
+- `DATABASE_ERROR`: falla durante una operacion con MongoDB.
+- `INTERNAL_SERVER_ERROR`: error inesperado.
+
+### Como Probar Errores
+
+Usuario inexistente:
+
+```txt
+GET /api/users/64b000000000000000000000
+```
+
+ID invalido:
+
+```txt
+GET /api/products/id-invalido
+```
+
+Producto con datos faltantes:
+
+```txt
+POST /api/products
+```
+
+Body:
+
+```json
+{
+  "name": "Producto incompleto"
+}
+```
+
+Ruta inexistente:
+
+```txt
+GET /api/ruta-inexistente
+```
+
+Mocks con cantidad negativa:
+
+```txt
+GET /api/mocks/users?qty=-1
+```
+
+Mocks con cantidad mayor al maximo permitido:
+
+```txt
+GET /api/mocks/users?qty=21
+```
+
+Mocks con coleccion invalida:
+
+```txt
+POST /api/mocks/seed?qty=5&collection=invalid
+```
+
+Falla durante carga en MongoDB:
+
+```txt
+POST /api/mocks/seed?qty=5
+```
+
+Para probar este caso, ejecutar el endpoint sin conexion valida a MongoDB o con `MONGODB_URI` incorrecto. La respuesta se deriva a `DATABASE_ERROR`.
 
 ## Constantes Del Dominio
 
@@ -245,7 +378,7 @@ Route -> Controller -> Service -> Repository -> Model
 
 Los endpoints `GET` solo devuelven datos simulados y no guardan nada en MongoDB. Reciben `qty` por query params.
 
-- `qty`: cantidad de registros a generar. Debe ser un numero entero entre `1` y `50`.
+- `qty`: cantidad de registros a generar. Debe ser un numero entero entre `1` y `20` para evitar cargas excesivas en MongoDB.
 
 Usuarios mock:
 
@@ -371,4 +504,4 @@ Si `saveToDatabase` es `true`, guardan los datos en MongoDB usando la misma logi
 
 ## Estado Actual
 
-El proyecto se encuentra en la segunda Etapa de refactorizacion para la Segunda pre-entrega.
+El proyecto se encuentra en la tercera pre-entrega del modulo 3, enfocada en manejo profesional y centralizado de errores.

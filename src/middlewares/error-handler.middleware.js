@@ -25,6 +25,10 @@ const resolveError = (error) => {
         return new CustomError(ERROR_CODES.VALIDATION_ERROR, 'El registro ya existe.');
     }
 
+    if (error instanceof mongoose.Error || error?.name?.startsWith('Mongo')) {
+        return new CustomError(ERROR_CODES.DATABASE_ERROR);
+    }
+
     return new CustomError(ERROR_CODES.INTERNAL_SERVER_ERROR);
 };
 

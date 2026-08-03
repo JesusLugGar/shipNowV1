@@ -9,8 +9,8 @@ class MockController {
         const count = Number(rawQty);
         const saveToDatabase = body.saveToDatabase === true || req.query.saveToDatabase === 'true';
 
-        if (!Number.isInteger(count) || count <= 0 || count > 50) {
-            throw new CustomError(ERROR_CODES.INVALID_MOCK_AMOUNT, 'El campo qty/count debe ser un número entero entre 1 y 50');
+        if (!Number.isInteger(count) || count <= 0 || count > 20) {
+            throw new CustomError(ERROR_CODES.INVALID_MOCK_AMOUNT, 'El campo count debe ser un número entero entre 1 y 20');
         }
 
         return { count, saveToDatabase };
