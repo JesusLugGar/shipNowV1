@@ -1,6 +1,6 @@
 # ShipNow API V1
 
-API base para el proyecto ShipNow del curso Backend III. El objetivo de esta pre-entrega es centralizar el manejo profesional de errores con errores personalizados, diccionario de errores y middleware global.
+API base para el proyecto ShipNow del curso Backend III. Se agrega para esta pre entrega el manejo de errores. Ya la api esta bastante avanzadas con distintos requisitos y se seguira puliendo y agregando codigo hasta la entrega final.
 
 ## Tecnologias
 
