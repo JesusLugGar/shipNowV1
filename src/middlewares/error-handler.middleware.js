@@ -4,6 +4,8 @@ import { ERROR_CODES } from '../error/error-codes.js';
 import { errorDictionary } from '../error/errors.dictionary.js';
 import CustomError from '../error/custom.error.js';
 
+import logger from '../config/logger.js';
+
 const resolveError = (error) => {
     if (error instanceof CustomError) {
         return error;
@@ -32,19 +34,41 @@ const resolveError = (error) => {
     return new CustomError(ERROR_CODES.INTERNAL_SERVER_ERROR);
 };
 
+const logResolvedError = (resolvedError, req) => {
+    const message = `[${resolvedError.code}] ${resolvedError.message}`;
+    const meta = {
+        method: req.method,
+        path: req.originalUrl,
+    };
+
+    if (resolvedError.status >= 400 && resolvedError.status < 500) {
+        logger.warning(message, meta);
+        return;
+    }
+
+    if (
+        resolvedError.code === ERROR_CODES.DATABASE_ERROR ||
+        resolvedError.code === ERROR_CODES.SERVICE_UNAVAILABLE
+    ) {
+        logger.fatal(message, meta);
+        return;
+    }
+
+    logger.error(message, meta);
+};
+
 export function errorHandler(error, req, res, next) {
     if (res.headersSent) {
         return next(error);
     }
 
     const resolvedError = resolveError(error);
-    const dictionaryError = errorDictionary[resolvedError.code] ?? errorDictionary[ERROR_CODES.INTERNAL_SERVER_ERROR];
+    const dictionaryError =
+        errorDictionary[resolvedError.code] ??
+        errorDictionary[ERROR_CODES.INTERNAL_SERVER_ERROR];
     const status = resolvedError.status ?? dictionaryError.status;
 
-    console.error(`[${resolvedError.code}] ${resolvedError.message}`, {
-        method: req.method,
-        path: req.originalUrl,
-    });
+    logResolvedError(resolvedError, req);
 
     res.status(status).json({
         success: false,

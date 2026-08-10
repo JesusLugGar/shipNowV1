@@ -11,6 +11,7 @@ import {
 } from '../../utils/constants.js';
 import { ERROR_CODES } from '../../error/error-codes.js';
 import CustomError from '../../error/custom.error.js';
+import logger from '../../config/logger.js';
 
 import MockRepository from '../repositories/mocks.repository.js';
 
@@ -172,6 +173,7 @@ class MockService {
         const validCollections = ['all', 'users', 'products', 'couriers', 'orders', 'deliveries'];
 
         if (!validCollections.includes(collection)) {
+            logger.warning(`Colección de mocks inválida recibida: ${collection}`);
             throw new CustomError(
                 ERROR_CODES.INVALID_MOCK_TYPE,
                 `Colección inválida. Valores permitidos: ${validCollections.join(', ')}`,

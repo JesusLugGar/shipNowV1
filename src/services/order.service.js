@@ -4,6 +4,7 @@ import { ERROR_CODES } from '../error/error-codes.js';
 import CustomError from '../error/custom.error.js';
 import UserRepository from '../repositories/user.repository.js';
 import ProductsService from './product.service.js';
+import logger from '../config/logger.js';
 
 class OrderService {
   static async getAllOrders() {
@@ -14,6 +15,7 @@ class OrderService {
     const order = await OrderRepository.findById(id);
 
     if (!order) {
+      logger.warning(`Pedido no encontrado: ${id}`);
       throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
     }
 
@@ -30,6 +32,9 @@ class OrderService {
       !Array.isArray(products) ||
       products.length === 0
     ) {
+      logger.warning(
+        'Falló la creación del pedido: faltan campos obligatorios (customerId, address, priority, products)',
+      );
       throw new CustomError(
         ERROR_CODES.VALIDATION_ERROR,
         'Faltan campos obligatorios: customerId, address, priority y products son requeridos.',
@@ -39,6 +44,7 @@ class OrderService {
     const customer = await UserRepository.findById(customerId);
 
     if (!customer) {
+      logger.warning(`Falló la creación del pedido: cliente no encontrado (${customerId})`);
       throw new CustomError(ERROR_CODES.USER_NOT_FOUND, 'El cliente no existe.');
     }
 
@@ -58,6 +64,8 @@ class OrderService {
 
     await ProductsService.decreaseStockForOrder(orderProducts);
 
+    logger.info(`Pedido creado correctamente: ${createdOrder._id}`);
+
     return createdOrder;
   }
 
@@ -68,9 +76,11 @@ class OrderService {
     });
 
     if (!order) {
+      logger.warning(`Pedido no encontrado al actualizar: ${id}`);
       throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
     }
 
+    logger.info(`Pedido actualizado parcialmente: ${id}`);
     return order;
   }
 
@@ -81,9 +91,11 @@ class OrderService {
     });
 
     if (!order) {
+      logger.warning(`Pedido no encontrado al actualizar: ${id}`);
       throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
     }
 
+    logger.info(`Pedido actualizado: ${id}`);
     return order;
   }
 
@@ -91,9 +103,11 @@ class OrderService {
     const order = await OrderRepository.findByIdAndDelete(id);
 
     if (!order) {
+      logger.warning(`Pedido no encontrado al eliminar: ${id}`);
       throw new CustomError(ERROR_CODES.ORDER_NOT_FOUND);
     }
 
+    logger.info(`Pedido eliminado: ${id}`);
     return order;
   }
 

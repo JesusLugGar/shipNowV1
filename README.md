@@ -1,6 +1,6 @@
 # ShipNow API V1
 
-API base para el proyecto ShipNow del curso Backend III. Se agrega para esta pre entrega el manejo de errores. Ya la api esta bastante avanzadas con distintos requisitos y se seguira puliendo y agregando codigo hasta la entrega final.
+API base para el proyecto ShipNow del curso Backend III. En esta 4ta pre-entrega se incorpora un sistema de logging profesional con Winston, conectado al manejo de errores y a los puntos relevantes de la aplicacion.
 
 ## Tecnologias
 
@@ -9,6 +9,8 @@ API base para el proyecto ShipNow del curso Backend III. Se agrega para esta pre
 - MongoDB
 - Mongoose
 - Dotenv
+- Winston
+- winston-daily-rotate-file
 - ESLint
 
 ## Requisitos Previos
@@ -92,7 +94,11 @@ src/
   config/
     config.js
     db.js
+    logger.js
   controllers/
+    courier.controller.js
+    delivery.controller.js
+    order.controller.js
     product.controller.js
     user.controller.js
   error/
@@ -125,6 +131,7 @@ src/
   routes/
     courier.routes.js
     delivery.routes.js
+    logger.routes.js
     order.routes.js
     product.routes.js
     users.routes.js
@@ -313,12 +320,75 @@ Ejemplos:
 
 Esto evita usar strings sueltos en distintas partes del proyecto y reduce errores por valores mal escritos.
 
+## Logging Y Monitoreo Basico
+
+ShipNow usa **Winston** como logger centralizado (`src/config/logger.js`), con rotacion diaria mediante `winston-daily-rotate-file`.
+
+### Niveles De Log
+
+- `debug`
+- `http`
+- `info`
+- `warning`
+- `error`
+- `fatal`
+
+### Comportamiento Segun Entorno
+
+La configuracion se apoya en `NODE_ENV`:
+
+- `development`: muestra desde `debug` (mas detalle en consola).
+- `production`: muestra desde `info` (menos ruido, mas control).
+
+### Persistencia Y Rotacion
+
+Los errores importantes se guardan en la carpeta `logs/` en la raiz del proyecto:
+
+- `logs/error-YYYY-MM-DD.log`: niveles `error` y `fatal`.
+- `logs/fatal-YYYY-MM-DD.log`: solo nivel `fatal`.
+
+La rotacion es diaria y conserva archivos por 3 dias (`maxFiles: '3d'`).
+
+La carpeta `logs/` esta en `.gitignore`. Los archivos generados por la aplicacion **no** se suben al repositorio.
+
+### Endpoint De Prueba
+
+Para verificar que todos los niveles funcionan:
+
+```txt
+GET /logger-test
+```
+
+Ese endpoint escribe un mensaje en cada nivel (`debug`, `http`, `info`, `warning`, `error`, `fatal`). En consola deberias ver todos los niveles activos segun el entorno. En los archivos de `logs/` solo deben aparecer `error` y `fatal`.
+
+### Integracion Con El Manejo De Errores
+
+El middleware global (`error-handler.middleware.js`) registra:
+
+- Errores de negocio / esperados (status 4xx) como `warning`.
+- Errores inesperados del servidor como `error`.
+- Fallas criticas de base de datos o disponibilidad como `fatal`.
+
+Tambien se registran eventos relevantes como:
+
+- Arranque del servidor.
+- Conexion exitosa o fallida a MongoDB.
+- Generacion e insercion de mocks.
+- Cantidad o coleccion invalida en mocks.
+- Creacion, actualizacion, eliminacion y "pedido no encontrado".
+
 ## Endpoints Principales
 
 Health check:
 
 ```txt
 GET /health
+```
+
+Prueba del logger:
+
+```txt
+GET /logger-test
 ```
 
 Lectura de recursos:
@@ -504,4 +574,4 @@ Si `saveToDatabase` es `true`, guardan los datos en MongoDB usando la misma logi
 
 ## Estado Actual
 
-El proyecto se encuentra en la tercera pre-entrega del modulo 3, enfocada en manejo profesional y centralizado de errores.
+El proyecto se encuentra en la cuarta pre-entrega del modulo 4, enfocada en logging y monitoreo basico con Winston.

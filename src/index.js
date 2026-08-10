@@ -12,6 +12,8 @@ import mocksRoutes from './mocks/routes/mocks.routes.js';
 import { ERROR_CODES } from './error/error-codes.js';
 import CustomError from './error/custom.error.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
+import loggerRoutes from './routes/logger.routes.js';
+import logger from './config/logger.js';
 
 
 const app = express();
@@ -22,6 +24,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);
 app.use('/api/couriers', courierRoutes);
 app.use('/api/deliveries', deliveryRoutes);
+app.use('/', loggerRoutes);
 
 if(process.env.NODE_ENV !== 'production') {
   app.use('/api/mocks', mocksRoutes);
@@ -45,5 +48,5 @@ app.use(errorHandler);
 connectDB();
 
 app.listen(config.PORT, () => {
-  console.log(`Servidor esta corriendo en puerto ${config.PORT}`);
+  logger.info(`Servidor ShipNow escuchando en el puerto ${config.PORT}`);
 });
