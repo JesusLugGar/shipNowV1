@@ -1,6 +1,6 @@
 # ShipNow API V1
 
-API base para el proyecto ShipNow del curso Backend III. En esta 4ta pre-entrega se incorpora un sistema de logging profesional con Winston, conectado al manejo de errores y a los puntos relevantes de la aplicacion.
+API REST para el proyecto ShipNow del curso Backend III. En esta 5ta pre-entrega se documenta la API con Swagger/OpenAPI, exponiendo una UI interactiva para consultar y probar los endpoints.
 
 ## Tecnologias
 
@@ -11,6 +11,8 @@ API base para el proyecto ShipNow del curso Backend III. En esta 4ta pre-entrega
 - Dotenv
 - Winston
 - winston-daily-rotate-file
+- swagger-jsdoc
+- swagger-ui-express
 - ESLint
 
 ## Requisitos Previos
@@ -87,6 +89,42 @@ Ejecutar ESLint y corregir automaticamente los errores que pueda resolver:
 npm run lint:fix
 ```
 
+## Documentacion Swagger
+
+Con el servidor levantado (`npm run dev`), abrir en el navegador:
+
+```txt
+http://localhost:<PORT>/api/docs
+```
+
+Reemplazar `<PORT>` por el valor de `PORT` en el `.env` (por ejemplo `1234`).
+
+La configuracion de OpenAPI esta separada de las rutas:
+
+- `src/docs/swagger.config.js`: informacion general, tags, schemas reutilizables, responses de error y parameters.
+- `src/docs/*.yaml`: paths por modulo (Users, Orders, Deliveries, Mocks, Logger, Products, Couriers y Health).
+
+Desde Swagger UI se pueden consultar y probar los endpoints (Try it out).
+
+### Modulos documentados
+
+- **Users**: CRUD de usuarios.
+- **Orders**: CRUD de pedidos.
+- **Deliveries**: listado, asignacion y cambio de estado de entregas.
+- **Mocks**: generacion en memoria e insercion de datos de prueba. No disponible si `NODE_ENV=production` (responde 403 `MOCKS_NOT_ALLOWED`).
+- **Logger**: `GET /logger-test`. Herramienta de validacion de Winston, no es una funcionalidad de negocio.
+- **Products**, **Couriers** y **Health**: documentados como extra.
+
+### Aclaraciones para probar
+
+- Health (`GET /health`) y Logger (`GET /logger-test`) responden texto, no JSON.
+- No hay autenticacion: la API no devuelve 401.
+- En mocks, `count` o `qty` debe ser un entero entre 1 y 20. Si no, 400 `INVALID_MOCK_AMOUNT`.
+- Para insertar datos de prueba: `POST /api/mocks/seed` con query `?qty=5&collection=all` o body `{ "count": 5, "collection": "all" }`.
+- `GET /api/mocks/users` y `GET /api/mocks/orders` generan datos en memoria y no guardan en MongoDB.
+- Asignar una entrega (`POST /api/deliveries/assign`) exige una orden en estado `created` y un courier `available`. Si la orden no esta en `created`, responde 400 `INVALID_ORDER_STATUS`.
+- Actualizar estado de entrega (`PUT /api/deliveries/{id}/status`) solo permite transiciones `assigned → in_transit|cancelled` e `in_transit → delivered|cancelled`. Cualquier otra da 400 `INVALID_DELIVERY_STATUS`.
+
 ## Estructura Del Proyecto
 
 ```txt
@@ -101,6 +139,16 @@ src/
     order.controller.js
     product.controller.js
     user.controller.js
+  docs/
+    swagger.config.js
+    health.yaml
+    logger.yaml
+    users.yaml
+    products.yaml
+    orders.yaml
+    couriers.yaml
+    deliveries.yaml
+    mocks.yaml
   error/
     custom.error.js
     error-codes.js
@@ -574,4 +622,4 @@ Si `saveToDatabase` es `true`, guardan los datos en MongoDB usando la misma logi
 
 ## Estado Actual
 
-El proyecto se encuentra en la cuarta pre-entrega del modulo 4, enfocada en logging y monitoreo basico con Winston.
+El proyecto se encuentra en la quinta pre-entrega del modulo 5, enfocada en documentacion profesional de la API con Swagger/OpenAPI. La UI interactiva esta en `/api/docs`.

@@ -1,4 +1,5 @@
 import express from 'express';
+import swaggerUi from 'swagger-ui-express';
 
 import { config } from './config/config.js';
 import { connectDB } from './config/db.js';
@@ -12,6 +13,7 @@ import mocksRoutes from './mocks/routes/mocks.routes.js';
 import { ERROR_CODES } from './error/error-codes.js';
 import CustomError from './error/custom.error.js';
 import { errorHandler } from './middlewares/error-handler.middleware.js';
+import swaggerDefinition from './docs/swagger.config.js';
 import loggerRoutes from './routes/logger.routes.js';
 import logger from './config/logger.js';
 
@@ -19,6 +21,9 @@ import logger from './config/logger.js';
 const app = express();
 
 app.use(express.json());
+
+app.use('/api/docs', swaggerUi.serve, swaggerUi.setup(swaggerDefinition));
+
 app.use('/api/users', usersRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/orders', orderRoutes);

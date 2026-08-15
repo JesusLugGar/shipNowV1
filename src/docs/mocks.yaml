@@ -1,0 +1,385 @@
+paths:
+  /api/mocks/users:
+    get:
+      tags:
+        - Mocks
+      summary: Generar usuarios mock (memoria)
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+      responses:
+        '200':
+          description: Usuarios mock (incluyen password, sin guardar)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/MockUser'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/products:
+    get:
+      tags:
+        - Mocks
+      summary: Generar productos mock (memoria)
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+      responses:
+        '200':
+          description: Productos mock
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Product'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/couriers:
+    get:
+      tags:
+        - Mocks
+      summary: Generar repartidores mock (memoria)
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+      responses:
+        '200':
+          description: Repartidores mock
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/orders:
+    get:
+      tags:
+        - Mocks
+      summary: Generar pedidos mock (memoria)
+      description: Devuelve orders más las relaciones users y products usadas para armarlos.
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+      responses:
+        '200':
+          description: Pedidos mock con relaciones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockOrdersMemory'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/deliveries:
+    get:
+      tags:
+        - Mocks
+      summary: Generar entregas mock (memoria)
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+      responses:
+        '200':
+          description: Entregas mock con relaciones
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockDeliveriesMemory'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/scenario:
+    get:
+      tags:
+        - Mocks
+      summary: Generar escenario completo (memoria)
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+      responses:
+        '200':
+          description: users, products, couriers, orders y deliveries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockScenario'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/seed:
+    post:
+      tags:
+        - Mocks
+      summary: Insertar mocks en MongoDB
+      description: >
+        Inserta datos de prueba en MongoDB. collection puede ir en query o body
+        (all, users, products, couriers, orders, deliveries).
+        El 400 es INVALID_MOCK_AMOUNT si count/qty no está entre 1 y 20,
+        o INVALID_MOCK_TYPE si collection no es válida.
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+        - $ref: '#/components/parameters/SeedCollection'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockSeedRequest'
+      responses:
+        '201':
+          description: Datos insertados
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockSeedResult'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/mock-users:
+    post:
+      tags:
+        - Mocks
+      summary: Generar usuarios mock
+      description: Si saveToDatabase es true responde 201 con el seed. Si no, 200 con users y message.
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+        - $ref: '#/components/parameters/SaveToDatabase'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockGenerateRequest'
+      responses:
+        '200':
+          description: Generados en memoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/MockUser'
+                  message:
+                    type: string
+                    example: Users generated successfully
+        '201':
+          description: Insertados en MongoDB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockSeedResult'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/mock-products:
+    post:
+      tags:
+        - Mocks
+      summary: Generar productos mock
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+        - $ref: '#/components/parameters/SaveToDatabase'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockGenerateRequest'
+      responses:
+        '200':
+          description: Generados en memoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  products:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Product'
+                  message:
+                    type: string
+                    example: Products generated successfully
+        '201':
+          description: Insertados en MongoDB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockSeedResult'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/mock-orders:
+    post:
+      tags:
+        - Mocks
+      summary: Generar pedidos mock
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+        - $ref: '#/components/parameters/SaveToDatabase'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockGenerateRequest'
+      responses:
+        '200':
+          description: Generados en memoria
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/MockOrdersMemory'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Orders generated successfully
+        '201':
+          description: Insertados en MongoDB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockSeedResult'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/mock-couriers:
+    post:
+      tags:
+        - Mocks
+      summary: Generar repartidores mock
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+        - $ref: '#/components/parameters/SaveToDatabase'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockGenerateRequest'
+      responses:
+        '200':
+          description: Generados en memoria
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  couriers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Courier'
+                  message:
+                    type: string
+                    example: Couriers generated successfully
+        '201':
+          description: Insertados en MongoDB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockSeedResult'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/mocks/mock-deliveries:
+    post:
+      tags:
+        - Mocks
+      summary: Generar entregas mock
+      parameters:
+        - $ref: '#/components/parameters/MockCount'
+        - $ref: '#/components/parameters/MockQty'
+        - $ref: '#/components/parameters/SaveToDatabase'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MockGenerateRequest'
+      responses:
+        '200':
+          description: Generados en memoria
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/MockDeliveriesMemory'
+                  - type: object
+                    properties:
+                      message:
+                        type: string
+                        example: Deliveries generated successfully
+        '201':
+          description: Insertados en MongoDB
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MockSeedResult'
+        '400':
+          $ref: '#/components/responses/InvalidMockAmount'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

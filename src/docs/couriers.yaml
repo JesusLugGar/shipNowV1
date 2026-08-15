@@ -1,0 +1,191 @@
+paths:
+  /api/couriers:
+    get:
+      tags:
+        - Couriers
+      summary: Listar repartidores
+      responses:
+        '200':
+          description: Lista de repartidores
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Courier'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    post:
+      tags:
+        - Couriers
+      summary: Crear repartidor
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateCourierRequest'
+      responses:
+        '201':
+          description: Repartidor creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/couriers/available:
+    get:
+      tags:
+        - Couriers
+      summary: Listar repartidores disponibles
+      responses:
+        '200':
+          description: Repartidores con availableStatus available
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Courier'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/couriers/available/{zone}:
+    get:
+      tags:
+        - Couriers
+      summary: Listar repartidores disponibles por zona
+      parameters:
+        - $ref: '#/components/parameters/Zone'
+      responses:
+        '200':
+          description: Repartidores disponibles en esa zona
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/ValidationError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/couriers/{id}:
+    get:
+      tags:
+        - Couriers
+      summary: Obtener repartidor por ID
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Repartidor encontrado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    put:
+      tags:
+        - Couriers
+      summary: Reemplazar repartidor
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PatchCourierRequest'
+      responses:
+        '200':
+          description: Repartidor actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+    delete:
+      tags:
+        - Couriers
+      summary: Eliminar repartidor
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Repartidor eliminado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Success'
+              example:
+                message: Repartidor eliminado correctamente
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/couriers/{id}/availability:
+    patch:
+      tags:
+        - Couriers
+      summary: Marcar repartidor como disponible
+      description: Sin body. 409 si ya está available.
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Repartidor marcado disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/couriers/{id}/unavailability:
+    patch:
+      tags:
+        - Couriers
+      summary: Marcar repartidor como no disponible
+      description: Sin body. 409 si ya está unavailable.
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Repartidor marcado no disponible
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Courier'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

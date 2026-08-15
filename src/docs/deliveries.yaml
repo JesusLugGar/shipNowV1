@@ -1,0 +1,101 @@
+paths:
+  /api/deliveries:
+    get:
+      tags:
+        - Deliveries
+      summary: Listar entregas
+      responses:
+        '200':
+          description: Lista de entregas
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Delivery'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/deliveries/assign:
+    post:
+      tags:
+        - Deliveries
+      summary: Asignar entrega
+      description: >
+        Requiere orderId y courierId.
+        La orden debe estar en created, no puede tener entrega previa,
+        y el courier debe estar available.
+        El 400 puede ser VALIDATION_ERROR (faltan campos) o INVALID_ORDER_STATUS
+        (la orden no está en created).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignDeliveryRequest'
+      responses:
+        '201':
+          description: Entrega asignada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+        '400':
+          $ref: '#/components/responses/InvalidOrderStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/deliveries/{id}:
+    get:
+      tags:
+        - Deliveries
+      summary: Obtener entrega por ID
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      responses:
+        '200':
+          description: Entrega encontrada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+        '400':
+          $ref: '#/components/responses/InvalidId'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+
+  /api/deliveries/{id}/status:
+    put:
+      tags:
+        - Deliveries
+      summary: Actualizar estado de entrega
+      description: >
+        Transiciones permitidas assigned → in_transit|cancelled,
+        in_transit → delivered|cancelled. Cualquier otra da INVALID_DELIVERY_STATUS.
+      parameters:
+        - $ref: '#/components/parameters/MongoId'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDeliveryStatusRequest'
+      responses:
+        '200':
+          description: Entrega actualizada
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Delivery'
+        '400':
+          $ref: '#/components/responses/InvalidDeliveryStatus'
+        '404':
+          $ref: '#/components/responses/NotFound'
+        '500':
+          $ref: '#/components/responses/InternalServerError'

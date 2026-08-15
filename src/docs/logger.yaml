@@ -1,0 +1,18 @@
+paths:
+  /logger-test:
+    get:
+      tags:
+        - Logger
+      summary: Probar niveles de logger
+      description: >
+        Herramienta de validación del logger Winston. No es una funcionalidad de negocio.
+        Escribe un log por cada nivel (debug, http, info, warning, error, fatal)
+        y responde texto plano.
+      responses:
+        '200':
+          description: Logger ejecutado
+          content:
+            text/html:
+              schema:
+                type: string
+                example: Logger test Completado! Revisar los logs.

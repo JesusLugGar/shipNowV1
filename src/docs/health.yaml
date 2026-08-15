@@ -1,0 +1,15 @@
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Devuelve un texto plano indicando el entorno. No consulta la base de datos.
+      responses:
+        '200':
+          description: API en ejecución
+          content:
+            text/html:
+              schema:
+                type: string
+                example: ShipNow API V1 - Se esta ejecutando en development mode
